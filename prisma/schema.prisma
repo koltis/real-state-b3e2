@@ -14,13 +14,13 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  password Password?
-  notes    Note[]
+  password   Password?
+  notes      Note[]
+  properties Property[]
 }
 
 model Password {
-  hash String
-
+  hash   String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String @unique
 }
@@ -35,4 +35,55 @@ model Note {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String
+}
+
+model AgencyFee {
+  id    Int        @id @default(autoincrement())
+  feeId Int        @unique
+  fee   AgencyFees @relation(fields: [feeId], references: [id])
+}
+
+model AgencyFees {
+  id         Int        @id @default(autoincrement())
+  fee        Float
+  properties Property[]
+  agencyFee  AgencyFee?
+}
+
+model PropertyImg {
+  id         String   @id @default(cuid())
+  alt        String
+  url        String
+  propertyId String
+  position   Int
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([position, propertyId])
+}
+
+model Property {
+  id String @id @default(cuid())
+
+  title        String
+  description  String
+  size         Int
+  phone        String
+  country      String
+  address1     String
+  address2     String?
+  cp           String
+  city         String
+  state        String
+  bedrooms     Int
+  bathroom     Int
+  garage       Boolean
+  ownerPrice   Float
+  agencyFee    AgencyFees @relation(fields: [agencyFeesId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  agencyFeesId Int        @default(1)
+  owner        User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId       String
+
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  imgs      PropertyImg[]
 }

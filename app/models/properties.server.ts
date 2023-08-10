@@ -40,6 +40,7 @@ export async function updateProperty({
   title,
   size,
   description,
+  geoCode,
 }: Pick<
   Property,
   | "id"
@@ -57,6 +58,7 @@ export async function updateProperty({
   | "title"
   | "size"
   | "description"
+  | "geoCode"
 >) {
   return await prisma.property.update({
     where: {
@@ -77,6 +79,7 @@ export async function updateProperty({
       title,
       size,
       description,
+      geoCode,
     },
   });
 }
@@ -97,6 +100,7 @@ export async function createProperty({
   description,
   userId,
   bathroom,
+  geoCode,
 }: Pick<
   Property,
   | "phone"
@@ -114,6 +118,7 @@ export async function createProperty({
   | "description"
   | "userId"
   | "bathroom"
+  | "geoCode"
 >) {
   const agencyFeesId = await prisma.agencyFee.findFirst();
 
@@ -135,6 +140,7 @@ export async function createProperty({
       description,
       agencyFeesId: agencyFeesId?.feeId,
       userId,
+      geoCode,
     },
   });
 }

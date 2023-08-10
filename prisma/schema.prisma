@@ -77,6 +77,7 @@ model Property {
   bedrooms     Int
   bathroom     Int
   garage       Boolean
+  geoCode      String     @default("qwedj2312j3h1j2kn3ko12n3o21n312j3ok12j3k")
   ownerPrice   Float
   agencyFee    AgencyFees @relation(fields: [agencyFeesId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   agencyFeesId Int        @default(1)

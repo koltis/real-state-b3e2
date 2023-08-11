@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import invariant from "tiny-invariant";
 
 const prisma = new PrismaClient();
 
@@ -11,7 +12,12 @@ async function seed() {
     // no worries if it doesn't exist yet
   });
 
-  const hashedPassword = await bcrypt.hash("koltisb@gmail.com", 10);
+  invariant(
+    process.env.SEED_USER_PASSWORD,
+    "The seed user must have a password",
+  );
+
+  const hashedPassword = await bcrypt.hash(process.env.SEED_USER_PASSWORD, 10);
 
   const user = await prisma.user.create({
     data: {

@@ -48,6 +48,8 @@ async function seed() {
     data: {
       userId: user.id,
       phone: "623144819",
+      geoCode:
+        "dXJuOm1ieGFkcjplNDVhZjAwYy0wODZkLTQxMWQtYTExYy1mZWZmMmM1ZGU5YTU",
       country: "spain",
       address1: "Av. Santa Rosa de Lima, 20",
       cp: "29007",
@@ -73,8 +75,25 @@ async function seed() {
       Nuestro departamento financiero realiza estudios sin compromiso con posibilidad de financiación hasta el 100%. Para más información, póngase en contacto con nosotros a través de este anuncio.
 
       EL PRECIO DE VENTA DEL INMUEBLE AQUÍ EXPUESTO INCLUYE LOS HONORARIOS DE INTERMEDIACIÓN INMOBILIARIA y LOS GASTOS RELACIONADOS CON DICHA COMPRA`,
+
+      imgs: {
+        create: {
+          url: "https://imagedelivery.net/xtrfEdMVPyUA4dlPxWzvNw/1463aa3e-bff0-4e6c-e4c9-4ba548583900/public",
+          alt: " facade of a modern house",
+          position: 1,
+        },
+      },
     },
   });
+
+  // await prisma.propertyImg.create({
+  //   data: {
+  //     url: "https://imagedelivery.net/xtrfEdMVPyUA4dlPxWzvNw/1463aa3e-bff0-4e6c-e4c9-4ba548583900/public",
+  //     alt: " facade of a modern house",
+  //     position: 1,
+  //     propertyId: property.id,
+  //   },
+  // });
 
   await prisma.note.create({
     data: {

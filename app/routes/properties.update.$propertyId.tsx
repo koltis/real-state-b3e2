@@ -5,7 +5,7 @@ import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import validator from "validator";
 import { z } from "zod";
 import { parse } from "@conform-to/zod";
-import { createProperty } from "~/models/properties.server";
+import { getProperty, updateProperty } from "~/models/properties.server";
 import { requireUserId } from "~/session.server";
 import invariant from "tiny-invariant";
 import { AddressMinimap, AddressAutofill } from "~/components/mapbox.client";
@@ -37,19 +37,44 @@ const schema = z.object({
     .refine((file) => file.size < 10000024, "File size must be less than 10mb"),
 });
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request, params }: LoaderArgs) => {
   const userId = await requireUserId(request);
+
   if (!userId) {
     return redirect("/login");
   }
-  invariant(process.env.MAPBOX_ACCES_TOKEN, "Acces token not found");
+
+  invariant(params.propertyId, "propertyId  not found");
+
+  const property = await getProperty({
+    id: params.propertyId,
+  });
+
+  const MAPBOX_ACCES_TOKEN = process.env.MAPBOX_ACCES_TOKEN;
+
+  invariant(MAPBOX_ACCES_TOKEN, "Acces token not found");
+
+  const res = await fetch(
+    `https://api.mapbox.com/search/geocode/v6/forward?q=${property.geoCode}&proximity=ip&access_token=${MAPBOX_ACCES_TOKEN}`,
+  );
+
+  const data = await res.json();
+
+  const feature = data.features[0];
+
+  invariant(property, "property  not found");
+
   return json(
-    { ENV: { MAPBOX_ACCES_TOKEN: process.env.MAPBOX_ACCES_TOKEN } },
+    {
+      ENV: { MAPBOX_ACCES_TOKEN },
+      property,
+      feature,
+    },
     { status: 200 },
   );
 };
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request, params }: ActionArgs) => {
   const userId = await requireUserId(request);
 
   if (!userId) {
@@ -63,6 +88,15 @@ export const action = async ({ request }: ActionArgs) => {
   if (!submission.value || submission.intent !== "submit") {
     return json(submission, { status: 400 });
   }
+
+  invariant(params.propertyId, "propertyId  not found");
+
+  const property = await getProperty({
+    id: params.propertyId,
+  });
+
+  invariant(property, "property  not found");
+
   const {
     phone,
     country,
@@ -102,29 +136,45 @@ export const action = async ({ request }: ActionArgs) => {
     submission.error["geoLocation"] = "the direction is not inside Málaga.";
     return json(submission, { status: 400 });
   }
-  const cloudflarePostBody = new FormData();
+  let imgData;
+  if (img.size !== 0) {
+    const cloudflarePostBody = new FormData();
 
-  cloudflarePostBody.append("file", img, img.name);
+    cloudflarePostBody.append("file", img, img.name);
 
-  const uploadImgsRes = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ID}/images/v1`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.CLOUDFLARE_IMG_API_KEY}`,
+    const uploadImgsRes = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ID}/images/v1`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.CLOUDFLARE_IMG_API_KEY}`,
+        },
+        body: cloudflarePostBody,
       },
-      body: cloudflarePostBody,
-    },
-  );
+    );
 
-  const uploadImgsData = await uploadImgsRes.json();
+    const uploadImgsData = await uploadImgsRes.json();
 
-  if (uploadImgsData.errors.length) {
-    submission.error["geoLocation"] = uploadImgsData.errors[0].message;
-    return json(submission, { status: 400 });
+    if (uploadImgsData.errors.length) {
+      submission.error["geoLocation"] = uploadImgsData.errors[0].message;
+      return json(submission, { status: 400 });
+    }
+    imgData = uploadImgsData;
   }
 
-  const property = await createProperty({
+  const updateImgData = imgData
+    ? {
+        img: {
+          url: ` https://imagedelivery.net/xtrfEdMVPyUA4dlPxWzvNw/${
+            imgData.result.id as string
+          }/public`,
+          alt: img?.name as string,
+        },
+      }
+    : {};
+
+  await updateProperty({
+    id: property.id,
     phone,
     country,
     address1,
@@ -139,25 +189,18 @@ export const action = async ({ request }: ActionArgs) => {
     size,
     description,
     bathroom,
-    userId,
     geoCode,
-    img: {
-      url: ` https://imagedelivery.net/xtrfEdMVPyUA4dlPxWzvNw/${
-        uploadImgsData.result.id as string
-      }/public`,
-      alt: img.name,
-    },
+    ...updateImgData,
   });
 
   return redirect(`/properties/${property.id}`);
 };
 
-export default function NewPropertyPage() {
+export default function UpdateProperty() {
   const data = useLoaderData<typeof loader>();
   const lastSubmission = useActionData<typeof action>();
   const [
     form,
-
     {
       phone,
       country,
@@ -179,18 +222,19 @@ export default function NewPropertyPage() {
   ] = useForm({
     lastSubmission,
     shouldRevalidate: "onInput",
+
     onValidate({ formData }) {
-      return parse(formData, { schema });
+      const submission = parse(formData, { schema });
+
+      return submission;
     },
   });
 
-  const [address1Value, setAddress1Value] = useState(
-    address1.defaultValue ?? "",
-  );
-  const [geoCodeValue, setGeoCodeValue] = useState(geoCode.defaultValue ?? "");
-  const [feature, setFeature] = useState();
+  const [, setAddress1Value] = useState(address1.defaultValue ?? "");
+  const [, setGeoCodeValue] = useState(geoCode.defaultValue ?? "");
+  const [feature, setFeature] = useState(data.feature);
 
-  const [showMinimap, setShowMiniMap] = useState(false);
+  const [showMinimap, setShowMiniMap] = useState(data.feature ? true : false);
   const handleRetrieve = (res: any) => {
     setFeature(res.features[0]);
     setGeoCodeValue(res.features[0].properties.mapbox_id);
@@ -220,6 +264,7 @@ export default function NewPropertyPage() {
                 <label className="flex w-full flex-col gap-1">
                   <span>Title: </span>
                   <input
+                    defaultValue={data.property?.title}
                     name={title.name}
                     type="text"
                     className="flex-1 rounded-md border-2 focus:border-blue-500  border-gray-600 px-3 text-lg leading-loose outline-none"
@@ -232,6 +277,7 @@ export default function NewPropertyPage() {
                 <label className="flex w-full flex-col gap-1">
                   <span>Description: </span>
                   <textarea
+                    defaultValue={data.property?.description}
                     name={description.name}
                     rows={8}
                     className="w-full flex-1 rounded-md border-2 focus:border-blue-500 border-gray-600  px-3 py-2 text-lg leading-6"
@@ -246,6 +292,7 @@ export default function NewPropertyPage() {
                       Size (m<sup>2</sup>):{" "}
                     </span>
                     <input
+                      defaultValue={data.property?.size}
                       type="number"
                       name={size.name}
                       className="flex-1 rounded-md border-2 focus:border-blue-500  border-gray-600 px-3 text-lg leading-loose outline-none overflow-hidden"
@@ -257,6 +304,7 @@ export default function NewPropertyPage() {
                   <label className="flex w-full flex-col gap-1">
                     <span> Bedrooms: </span>
                     <input
+                      defaultValue={data.property?.bedrooms}
                       name={bedrooms.name}
                       type="number"
                       className="flex-1 rounded-md border-2 focus:border-blue-500  border-gray-600 px-3 text-lg leading-loose outline-none overflow-hidden"
@@ -268,6 +316,7 @@ export default function NewPropertyPage() {
                   <label className="flex w-full flex-col gap-1">
                     <span> Bathroom: </span>
                     <input
+                      defaultValue={data.property?.bathroom}
                       name={bathroom.name}
                       type="number"
                       className="flex-1 rounded-md border-2 focus:border-blue-500  border-gray-600 px-3 text-lg leading-loose outline-none overflow-hidden"
@@ -282,6 +331,7 @@ export default function NewPropertyPage() {
                     <span>Country: </span>
                     <input
                       autoComplete="country"
+                      defaultValue={data.property?.country}
                       name={country.name}
                       className="flex-1 rounded-md border-2 focus:border-blue-500  border-gray-600 px-3 text-lg leading-loose outline-none overflow-hidden"
                     />
@@ -293,6 +343,7 @@ export default function NewPropertyPage() {
                     <span> Cp: </span>
                     <input
                       autoComplete="postal-code"
+                      defaultValue={data.property?.cp}
                       name={cp.name}
                       className="flex-1 rounded-md border-2 focus:border-blue-500  border-gray-600 px-3 text-lg leading-loose outline-none overflow-hidden"
                     />
@@ -303,6 +354,7 @@ export default function NewPropertyPage() {
                   <label className="flex w-full flex-col gap-1">
                     <span> City: </span>
                     <input
+                      defaultValue={data.property?.city}
                       name={city.name}
                       autoComplete="address-level2"
                       className="flex-1 rounded-md border-2 focus:border-blue-500  border-gray-600 px-3 text-lg leading-loose outline-none overflow-hidden"
@@ -318,6 +370,7 @@ export default function NewPropertyPage() {
                     <span> State: </span>
                     <input
                       autoComplete="address-level1"
+                      defaultValue={data.property?.state}
                       name={state.name}
                       className="flex-1 rounded-md border-2 focus:border-blue-500  border-gray-600 px-3 text-lg leading-loose outline-none overflow-hidden"
                     />
@@ -328,6 +381,7 @@ export default function NewPropertyPage() {
                   <label className="flex w-full flex-col gap-1">
                     <span>Phone: </span>
                     <input
+                      defaultValue={data.property?.phone}
                       name={phone.name}
                       className="flex-1 rounded-md border-2 focus:border-blue-500  border-gray-600 px-3 text-lg leading-loose outline-none overflow-hidden"
                     />
@@ -339,6 +393,7 @@ export default function NewPropertyPage() {
                 <label className="flex  items-start w-full flex-col gap-1 ">
                   <span> Garage: </span>
                   <input
+                    defaultChecked={data.property?.garage ? true : false}
                     name={garage.name}
                     type="checkbox"
                     className="flex-1 rounded-md border-2 focus:border-blue-500  border-gray-600 px-3 text-lg leading-loose outline-none overflow-hidden"
@@ -356,6 +411,13 @@ export default function NewPropertyPage() {
                     >
                       <input
                         autoComplete="address-line1"
+                        defaultValue={
+                          data.property?.address1 +
+                          " " +
+                          data.property?.cp +
+                          " " +
+                          data.property?.state
+                        }
                         onChange={(e) => {
                           const { value } = e.target;
                           setAddress1Value(value);
@@ -365,7 +427,7 @@ export default function NewPropertyPage() {
                     </AddressAutofill>
 
                     <input
-                      defaultValue={address1Value}
+                      defaultValue={data.property?.address1}
                       {...conform.input(address1, { hidden: true })}
                       onChange={(e) => setAddress1Value(e.target.value)}
                       onFocus={() => customInputRef.current?.focus()}
@@ -374,7 +436,7 @@ export default function NewPropertyPage() {
                       className="flex-1 rounded-md border-2 focus:border-blue-500  border-gray-600 px-3 text-lg leading-loose outline-none overflow-hidden"
                     />
                     <input
-                      defaultValue={geoCodeValue}
+                      defaultValue={data.property?.geoCode}
                       {...conform.input(geoCode, { hidden: true })}
                       onChange={(e) => setGeoCodeValue(e.target.value)}
                       onFocus={() => customInputRef.current?.focus()}
@@ -401,6 +463,9 @@ export default function NewPropertyPage() {
                 <label className="flex w-full flex-col gap-1">
                   <span> Address Line 2 : </span>
                   <input
+                    defaultValue={
+                      data.property?.address2 ? data.property?.address2 : ""
+                    }
                     autoComplete="address-line2"
                     name={address2.name}
                     className="flex-1 rounded-md border-2 focus:border-blue-500  border-gray-600 px-3 text-lg leading-loose outline-none overflow-hidden"
@@ -413,6 +478,7 @@ export default function NewPropertyPage() {
                 <label className="flex w-full flex-col gap-1">
                   <span>OwnerPrice : </span>
                   <input
+                    defaultValue={data.property?.ownerPrice}
                     name={ownerPrice.name}
                     type="number"
                     className="flex-1 rounded-md border-2 focus:border-blue-500  border-gray-600 px-3 text-lg leading-loose outline-none overflow-hidden appearance-none  "

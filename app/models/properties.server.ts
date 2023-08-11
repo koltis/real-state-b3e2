@@ -9,6 +9,7 @@ export async function getProperty({ id }: { id: string }) {
     where: { id },
     include: {
       agencyFee: true,
+      imgs: true,
     },
   });
 }
@@ -41,6 +42,7 @@ export async function updateProperty({
   size,
   description,
   geoCode,
+  img,
 }: Pick<
   Property,
   | "id"
@@ -59,7 +61,33 @@ export async function updateProperty({
   | "size"
   | "description"
   | "geoCode"
->) {
+> & {
+  img?: {
+    url: string;
+    alt: string;
+    position?: number;
+  };
+}) {
+  const updateImg = img?.url
+    ? {
+        imgs: {
+          update: {
+            where: {
+              position_propertyId: {
+                position: 1,
+                propertyId: id,
+              },
+            },
+            data: {
+              url: img.url,
+              alt: img.alt,
+              position: 1,
+            },
+          },
+        },
+      }
+    : {};
+
   return await prisma.property.update({
     where: {
       id,
@@ -80,6 +108,7 @@ export async function updateProperty({
       size,
       description,
       geoCode,
+      ...updateImg,
     },
   });
 }
@@ -101,6 +130,7 @@ export async function createProperty({
   userId,
   bathroom,
   geoCode,
+  img,
 }: Pick<
   Property,
   | "phone"
@@ -119,7 +149,13 @@ export async function createProperty({
   | "userId"
   | "bathroom"
   | "geoCode"
->) {
+> & {
+  img: {
+    url: string;
+    alt: string;
+    position?: number;
+  };
+}) {
   const agencyFeesId = await prisma.agencyFee.findFirst();
 
   return await prisma.property.create({
@@ -141,6 +177,13 @@ export async function createProperty({
       agencyFeesId: agencyFeesId?.feeId,
       userId,
       geoCode,
+      imgs: {
+        create: {
+          url: img.url,
+          alt: img.alt,
+          position: 1,
+        },
+      },
     },
   });
 }

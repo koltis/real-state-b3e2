@@ -28,14 +28,25 @@ export default function PropertiesPage() {
           <Link to=".">Properties</Link>
         </h1>
         <p>{user.email}</p>
-        <Form action="/logout" method="post">
-          <button
-            type="submit"
-            className="rounded bg-slate-600 px-4 py-2 text-blue-100 hover:bg-blue-500 active:bg-blue-600"
-          >
-            Logout
-          </button>
-        </Form>
+        <div className=" flex">
+          <Link to="/">
+            <button
+              type="submit"
+              className="rounded px-4 py-2 text-blue-100 hover:bg-blue-500 active:bg-blue-600"
+            >
+              Main Page
+            </button>
+          </Link>
+
+          <Form action="/logout" method="post" className="ml-3">
+            <button
+              type="submit"
+              className="rounded bg-slate-600 px-4 py-2 text-blue-100 hover:bg-blue-500 active:bg-blue-600"
+            >
+              Logout
+            </button>
+          </Form>
+        </div>
       </header>
 
       <main className="flex h-full bg-white ">
@@ -66,7 +77,7 @@ export default function PropertiesPage() {
           )}
         </div>
 
-        <div className="flex-1 p-6 ">
+        <div className="flex-1 overflow-auto p-6 ">
           <Outlet />
         </div>
       </main>

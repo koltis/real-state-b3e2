@@ -23,9 +23,8 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   invariant(params.propertyId, "propertyId  not found");
 
   const property = await getProperty({ id: params.propertyId });
-  if (!property) {
-    throw new Response("Not Found", { status: 404 });
-  }
+
+  invariant(property?.id, "propertyId  not found");
 
   const MAPBOX_ACCES_TOKEN = process.env.MAPBOX_ACCES_TOKEN;
 
@@ -135,6 +134,8 @@ export default function PropertyDetailsPage() {
         <ClientOnly fallback={void 0}>
           {() => (
             <div id="minimap-container" className="  h-64  w-60  mt18">
+              {/* 
+// @ts-ignore */}
               <AddressMinimap
                 accessToken={data.ENV.MAPBOX_ACCES_TOKEN}
                 show

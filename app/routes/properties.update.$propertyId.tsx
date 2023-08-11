@@ -50,6 +50,10 @@ export const loader = async ({ request, params }: LoaderArgs) => {
     id: params.propertyId,
   });
 
+  if (!property) {
+    throw new Response("Not Found", { status: 404 });
+  }
+
   const MAPBOX_ACCES_TOKEN = process.env.MAPBOX_ACCES_TOKEN;
 
   invariant(MAPBOX_ACCES_TOKEN, "Acces token not found");
@@ -415,6 +419,8 @@ export default function UpdateProperty() {
                 <div>
                   <label className="flex w-full flex-col gap-1">
                     <span> Address Line 1 : </span>
+                    {/* 
+                  // @ts-ignore */}
                     <AddressAutofill
                       onRetrieve={handleRetrieve}
                       accessToken={data.ENV.MAPBOX_ACCES_TOKEN}
@@ -462,6 +468,8 @@ export default function UpdateProperty() {
                   </label>
                 </div>
                 <div id="minimap-container" className="  h-64  w-60  mt18">
+                  {/* 
+                  // @ts-ignore */}
                   <AddressMinimap
                     accessToken={data.ENV.MAPBOX_ACCES_TOKEN}
                     show={showMinimap}

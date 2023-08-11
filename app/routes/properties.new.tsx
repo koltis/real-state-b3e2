@@ -358,6 +358,8 @@ export default function NewPropertyPage() {
                 <div>
                   <label className="flex w-full flex-col gap-1">
                     <span> Address Line 1 : </span>
+                    {/* 
+// @ts-ignore */}
                     <AddressAutofill
                       onRetrieve={handleRetrieve}
                       accessToken={data.ENV.MAPBOX_ACCES_TOKEN}
@@ -398,6 +400,7 @@ export default function NewPropertyPage() {
                   </label>
                 </div>
                 <div id="minimap-container" className="  h-64  w-60  mt18">
+                  {/* // @ts-ignore */}
                   <AddressMinimap
                     accessToken={data.ENV.MAPBOX_ACCES_TOKEN}
                     show={showMinimap}

@@ -36,14 +36,6 @@ async function seed() {
     },
   });
 
-  await prisma.note.create({
-    data: {
-      title: "My first note",
-      body: "Hello, world!",
-      userId: user.id,
-    },
-  });
-
   await prisma.property.create({
     data: {
       userId: user.id,

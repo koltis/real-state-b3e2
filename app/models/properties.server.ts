@@ -2,8 +2,6 @@ import type { User, Property } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 
-export type { Note } from "@prisma/client";
-
 export async function getProperty({ id }: { id: string }) {
   return await prisma.property.findUnique({
     where: { id },

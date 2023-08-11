@@ -50,11 +50,11 @@ async function seed() {
       phone: "623144819",
       geoCode:
         "dXJuOm1ieGFkcjplNDVhZjAwYy0wODZkLTQxMWQtYTExYy1mZWZmMmM1ZGU5YTU",
-      country: "spain",
+      country: "es",
       address1: "Av. Santa Rosa de Lima, 20",
       cp: "29007",
       city: "malaga",
-      state: "andalucia",
+      state: "Málaga",
       bathroom: 2,
       bedrooms: 4,
       garage: false,

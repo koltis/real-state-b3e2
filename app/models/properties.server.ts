@@ -25,6 +25,14 @@ export async function getUserProperties({ userId }: { userId: User["id"] }) {
   });
 }
 
+export async function getProperties() {
+  return await prisma.property.findMany({
+    orderBy: { updatedAt: "desc" },
+    include: { imgs: true, agencyFee: true },
+    take: 21,
+  });
+}
+
 export async function updateProperty({
   id,
   phone,

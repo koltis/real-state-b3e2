@@ -132,6 +132,10 @@ export const action = async ({ request, params }: ActionArgs) => {
     submission.error["geoLocation"] = "Oops! Something went wrong.";
     return json(submission, { status: 400 });
   }
+  if (!data.features[0]) {
+    submission.error["geoLocation"] = "Oops! Something went wrong.";
+    return json(submission, { status: 400 });
+  }
 
   if (!data.features[0].properties.context) {
     submission.error["geoLocation"] = "the direction is not valid.";

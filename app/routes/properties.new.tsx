@@ -400,7 +400,8 @@ export default function NewPropertyPage() {
                   </label>
                 </div>
                 <div id="minimap-container" className="  h-64  w-60  mt18">
-                  {/* // @ts-ignore */}
+                  {/* 
+                  // @ts-ignore */}
                   <AddressMinimap
                     accessToken={data.ENV.MAPBOX_ACCES_TOKEN}
                     show={showMinimap}

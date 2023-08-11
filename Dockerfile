@@ -36,7 +36,7 @@ RUN npx prisma generate
 
 
 ADD . .
-RUN npx prisma db seed
+RUN npx prisma db seed:prod
 RUN npm run build
 
 # Finally, build the production image with minimal footprint

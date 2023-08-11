@@ -17,8 +17,8 @@ export const action = async ({ request }: ActionArgs) => {
   const formData = await request.formData();
   const email = formData.get("email");
   const password = formData.get("password");
-  const redirectTo = safeRedirect("properties");
-
+  const redirectTo = safeRedirect("/properties");
+  console.log(redirectTo);
   if (!validateEmail(email)) {
     return json(
       { errors: { email: "Email is invalid", password: null } },

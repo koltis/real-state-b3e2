@@ -23,8 +23,9 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   invariant(params.propertyId, "propertyId  not found");
 
   const property = await getProperty({ id: params.propertyId });
-
-  invariant(property?.id, "propertyId  not found");
+  if (!property) {
+    throw new Response("Not Found", { status: 404 });
+  }
 
   const MAPBOX_ACCES_TOKEN = process.env.MAPBOX_ACCES_TOKEN;
 

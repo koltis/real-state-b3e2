@@ -25,12 +25,31 @@ export async function getUserProperties({ userId }: { userId: User["id"] }) {
   });
 }
 
-export async function getProperties() {
-  return await prisma.property.findMany({
+export async function getProperties({
+  take = 4,
+  page = 0,
+}: {
+  take?: number;
+  page?: number;
+}) {
+  const skip = page ? { skip: page * take } : void 0;
+
+  const propertiesTaken = await prisma.property.findMany({
     orderBy: { updatedAt: "desc" },
     include: { imgs: true, agencyFee: true },
-    take: 21,
+    take: 4 + 1,
+    ...skip,
   });
+
+  const properties = [...propertiesTaken];
+  properties.pop();
+
+  return {
+    prev: page >= 1 ? true : false,
+    page: page,
+    next: propertiesTaken.length === take + 1 ? true : false,
+    properties,
+  };
 }
 
 export async function updateProperty({

@@ -60,6 +60,8 @@ export const loader = async ({ request, params }: LoaderArgs) => {
 
   const data = await res.json();
 
+  invariant(data.features, "geolocation data not found");
+  invariant(data.features[0], "geolocation data not found");
   const feature = data.features[0];
 
   invariant(property, "property  not found");
@@ -121,6 +123,10 @@ export const action = async ({ request, params }: ActionArgs) => {
   );
 
   const data = await res.json();
+  if (!data.features) {
+    submission.error["geoLocation"] = "Oops! Something went wrong.";
+    return json(submission, { status: 400 });
+  }
 
   if (!data.features[0]) {
     submission.error["geoLocation"] = "Oops! Something went wrong.";

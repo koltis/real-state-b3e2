@@ -87,6 +87,10 @@ export const action = async ({ request }: ActionArgs) => {
   );
 
   const data = await res.json();
+  if (!data.features) {
+    submission.error["geoLocation"] = "Oops! Something went wrong.";
+    return json(submission, { status: 400 });
+  }
 
   if (!data.features[0]) {
     submission.error["geoLocation"] = "Oops! Something went wrong.";

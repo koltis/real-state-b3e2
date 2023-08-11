@@ -37,6 +37,8 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   const data = await res.json();
 
+  invariant(data.features, "Acces token not found");
+  invariant(data.features[0], "Acces token not found");
   const feature = data.features[0];
 
   return json({

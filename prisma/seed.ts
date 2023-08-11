@@ -8,20 +8,9 @@ async function seed() {
   const email = "koltisb@gmail.com";
 
   // cleanup the existing database
-  const deletedUser = await prisma.user
-    .delete({ where: { email } })
-    .catch(() => {
-      // no worries if it doesn't exist yet
-    });
-  if (deletedUser) {
-    await prisma.property
-      .deleteMany({
-        where: { userId: deletedUser.id },
-      })
-      .catch(() => {
-        // no worries if it doesn't exist yet
-      });
-  }
+  await prisma.user.delete({ where: { email } }).catch(() => {
+    // no worries if it doesn't exist yet
+  });
 
   invariant(
     process.env.SEED_USER_PASSWORD,

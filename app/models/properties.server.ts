@@ -39,14 +39,17 @@ export async function getProperties({
     ...skip,
   });
 
-  const properties = [...propertiesTaken];
-  properties.pop();
+  const next = propertiesTaken.length === take + 1 ? true : false;
+
+  if (next) {
+    propertiesTaken.pop();
+  }
 
   return {
     prev: page >= 1 ? true : false,
     page: page,
-    next: propertiesTaken.length === take + 1 ? true : false,
-    properties,
+    next,
+    properties: propertiesTaken,
   };
 }
 

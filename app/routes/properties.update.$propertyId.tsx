@@ -145,7 +145,8 @@ export const action = async ({ request, params }: ActionArgs) => {
     submission.error["geoLocation"] = "the direction is not valid.";
     return json(submission, { status: 400 });
   }
-
+  console.log(data.features[0].properties.context.region.name);
+  console.log(data.features[0].properties.context);
   if (data.features[0].properties.context.region.name !== "Málaga") {
     submission.error["geoLocation"] = "the direction is not inside Málaga.";
     return json(submission, { status: 400 });
@@ -245,7 +246,7 @@ export default function UpdateProperty() {
   });
 
   const [, setAddress1Value] = useState(address1.defaultValue ?? "");
-  const [, setGeoCodeValue] = useState(geoCode.defaultValue ?? "");
+  const [geoCodeValue, setGeoCodeValue] = useState(geoCode.defaultValue ?? "");
   const [feature, setFeature] = useState(data.feature);
 
   const [showMinimap, setShowMiniMap] = useState(data.feature ? true : false);
@@ -454,6 +455,9 @@ export default function UpdateProperty() {
                     <input
                       defaultValue={data.property?.geoCode}
                       {...conform.input(geoCode, { hidden: true })}
+                      value={
+                        geoCodeValue ? geoCodeValue : data.property.geoCode
+                      }
                       onChange={(e) => setGeoCodeValue(e.target.value)}
                       onFocus={() => customInputRef.current?.focus()}
                       type="hidden"
